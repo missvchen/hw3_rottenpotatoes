@@ -25,4 +25,66 @@ When /I (un)?check the following ratings: (.*)/ do |uncheck, rating_list|
   # HINT: use String#split to split up the rating_list, then
   #   iterate over the ratings and reuse the "When I check..." or
   #   "When I uncheck..." steps in lines 89-95 of web_steps.rb
+  rating_list.split(",").each do |rating|
+    rating = rating.gsub(/\s/, '')
+    if uncheck == nil || uncheck.empty?	# uncheck returns "un" if uncheck
+      check("ratings_#{rating}")
+    else
+      uncheck("ratings_#{rating}")
+    end
+  end
 end
+
+When /I (un)?check all of the ratings/ do |uncheck|
+  "G,PG,PG-13,R".split(',').each do |rating|
+    if uncheck == nil || uncheck.empty?
+      check("ratings_#{rating}")
+    else
+      uncheck("ratings_#{rating}")
+    end
+  end
+end
+
+Then /I should see movies with the following ratings: (.*)/ do |rating_list|
+  rating_list.split(",").each do |rating|
+    rating = rating.gsub(/\s/, '')
+    if page.respond_to? :should
+      page.should have_selector("td", :text => /^#{rating}$/, :count => Movie.where("rating = ?", rating).count)
+    else
+      assert page.has_selector("td", :text => /^#{rating}$/, :count => Movie.where("rating = ?", rating).count)
+    end
+  end
+end
+
+Then /I should not see movies with the following ratings: (.*)/ do |rating_list|
+  rating_list.split(",").each do |rating|
+    rating = rating.gsub(/\s/, '')
+    if page.respond_to? :should
+      page.should_not have_selector("td", :text => /^#{rating}$/)
+    else
+      assert page.has_no_selector("td", :text => /^#{rating}$/)
+    end
+  end
+end
+
+Then /I should see no movies/ do
+  if page.respond_to? :should_not
+    page.should_not have_css("tbody tr")
+  else
+    assert page.has_no_css("tbody tr")
+  end
+end
+
+Then /I should see all of the movies/ do
+  if page.respond_to? :should
+    page.should have_css("tbody tr", :count => Movie.count)
+  else
+    assert page.has_css("tbody tr", :count => Movie.count)
+  end
+end
+
+Then /I should see '(.*)' before '(.*)'/ do |first_title, second_title|
+  titles = page.all("table#movies tbody tr td[1]").map {|t| t.text}
+  assert titles.index(first_title) < titles.index(second_title)
+end
+
