@@ -4,7 +4,7 @@ Given /the following movies exist/ do |movies_table|
   movies_table.hashes.each do |movie|
     # each returned element will be a hash whose key is the table header.
     # you should arrange to add that movie to the database here.
-    Movie.create!({ :title => movie["title"], :rating => movie["rating"], :release_date => movie["release_date"] })
+    Movie.create!({ :title => movie["title"], :rating => movie["rating"], :release_date => movie["release_date"], :director => movie["director"] })
   end
 end
 
@@ -86,5 +86,10 @@ end
 Then /I should see '(.*)' before '(.*)'/ do |first_title, second_title|
   titles = page.all("table#movies tbody tr td[1]").map {|t| t.text}
   assert titles.index(first_title) < titles.index(second_title)
+end
+
+Then /the director of "(.*)" should be "(.*)"/ do |title, director|
+  movie = Movie.find_by_title(title)
+  movie.director.should eq director
 end
 
